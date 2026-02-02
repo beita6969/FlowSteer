@@ -1,0 +1,486 @@
+# Dataset-Specific LLM Judge Prompts Configuration
+
+# Configuration version
+version: "1.0"
+generated_date: "2025-11-23"
+
+# Global configuration
+global:
+  model: "gpt-oss-120b"  # LLM Judge model
+  temperature: 0.0       # Deterministic output
+  max_tokens: 200        # Maximum generation length
+
+  # Common output format requirement
+  output_format: |
+    You must respond in this exact XML format:
+    <true_false>True</true_false>  or  <true_false>False</true_false>
+
+    Do NOT include any explanation or reasoning in your response.
+    ONLY output the XML tag with True or False.
+
+# ============================================
+# GSM8K Dataset Judge Configuration
+# ============================================
+gsm8k:
+  enabled: true
+  description: "Grade School Math 8K - Elementary math word problems"
+
+  # Answer extraction strategy
+  answer_extraction:
+    priority:
+      - "Number after ####"  # GSM8K standard format
+      - "Content in \\boxed{}"
+      - "Last number"
+
+    patterns:
+      - regex: "####\\s*(-?\\d+\\.?\\d*)"
+        description: "GSM8K standard answer format"
+      - regex: "<<([^>]+)>>"
+        action: "ignore"  # Ignore intermediate calculation markers
+        description: "Intermediate calculation steps, not final answer"
+
+  # Judge prompt
+  judge_prompt: |
+    You are a mathematical equivalence evaluator for GSM8K problems.
+
+    **Task**: Determine if the predicted answer is mathematically equivalent to the ground truth.
+
+    **Special Rules for GSM8K**:
+    1. The ground truth may contain calculation steps with "<<calc>>" markers - IGNORE these
+    2. The ground truth may end with "#### ANSWER" - THIS is the final answer
+    3. Extract ONLY the final numerical value from "#### NUMBER"
+    4. If prediction is in \\boxed{}, extract the content
+
+    **Problem**: {{{problem}}}
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Step 1: Extract Final Answers**
+    - From Ground Truth: Look for "####" followed by a number
+    - From Prediction: Extract number from \\boxed{} or final number
+    - Ignore intermediate steps like "48/2 = <<48/2=24>>24"
+
+    **Step 2: Normalize**
+    - Remove units ($, hours, etc.)
+    - Convert to decimal if needed
+    - Allow rounding to 2 decimal places
+
+    **Step 3: Compare**
+    - Are the two numbers equal within tolerance 0.01?
+
+    {{{output_format}}}
+
+# ============================================
+# Math Dataset Judge Configuration
+# ============================================
+math:
+  enabled: true
+  description: "MATH Dataset - Competition-level math problems"
+
+  # Answer extraction strategy
+  answer_extraction:
+    priority:
+      - "meta.short_answer field"  # Prefer standardized answer
+      - "Content in \\boxed{}"
+      - "LaTeX expression"
+
+    latex_normalization:
+      enabled: true
+      rules:
+        - "\\frac{a}{b} -> a/b"
+        - "\\sqrt{x} -> sqrt(x)"
+        - "x^{a} -> x**a"
+
+  # Judge prompt
+  judge_prompt: |
+    You are a mathematical equivalence evaluator for competition-level math problems.
+
+    **Task**: Determine if the predicted answer is mathematically equivalent to the ground truth.
+
+    **Special Rules for MATH Dataset**:
+    1. Ground truth may include full solution process - extract ONLY the final answer
+    2. Handle LaTeX expressions (\\frac, \\sqrt, \\boxed, etc.)
+    3. Answers can be in multiple equivalent forms:
+       - Fraction vs Decimal: 1/2 = 0.5
+       - Percentage: 50% = 0.5
+       - Scientific notation: 1e5 = 100000
+       - LaTeX: \\frac{1}{2} = 0.5
+
+    **Problem**: {{{problem}}}
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Step 1: Extract Final Answers**
+    - From Ground Truth: Extract the final answer (may be in \\boxed{} or at end)
+    - From Prediction: Extract from \\boxed{} or final expression
+
+    **Step 2: Normalize LaTeX**
+    - Convert \\frac{a}{b} to a/b
+    - Convert \\sqrt{x} to sqrt(x)
+    - Remove formatting commands
+
+    **Step 3: Evaluate Equivalence**
+    - Numerical: Compare values with tolerance 1e-4
+    - Algebraic: Check if expressions simplify to same form
+    - Allow equivalent representations (0.5 = 1/2 = 50%)
+
+    {{{output_format}}}
+
+# ============================================
+# HumanEval Dataset Configuration
+# ============================================
+humaneval:
+  enabled: false  # Disable LLM Judge, use test execution
+  description: "HumanEval - Python programming tasks"
+
+  evaluation_method: "test_execution"  # Use test case execution
+
+  # Test execution configuration
+  test_execution:
+    timeout: 5.0  # seconds
+    max_memory: 512  # MB
+    sandbox: true
+
+  # Only use LLM Judge when test cases are missing
+  fallback_judge_prompt: |
+    WARNING: Test cases are missing. Falling back to semantic comparison.
+
+    **Task**: Determine if the predicted code is semantically equivalent to the ground truth.
+
+    **Problem**: {{{problem}}}
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Rules**:
+    1. Variable names can be different (value_map vs WORD_TO_NUM)
+    2. Implementation approach can vary
+    3. Focus on functional equivalence, not text matching
+    4. If both solve the same problem correctly, they are equivalent
+
+    Note: This is NOT reliable. Code should be executed with test cases.
+
+    {{{output_format}}}
+
+# ============================================
+# MBPP Dataset Configuration
+# ============================================
+mbpp:
+  enabled: false  # Disable LLM Judge, use test execution
+  description: "Mostly Basic Python Problems"
+
+  evaluation_method: "test_execution"
+
+  test_execution:
+    timeout: 5.0
+    max_memory: 512
+    sandbox: true
+
+  # Fallback same as HumanEval
+  fallback_judge_prompt: |
+    WARNING: Test cases are missing. Falling back to semantic comparison.
+
+    **Task**: Determine if the predicted code is semantically equivalent to the ground truth.
+
+    **Problem**: {{{problem}}}
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Rules**:
+    1. Variable names can be different (value_map vs WORD_TO_NUM)
+    2. Implementation approach can vary
+    3. Focus on functional equivalence, not text matching
+    4. If both solve the same problem correctly, they are equivalent
+
+    Note: This is NOT reliable. Code should be executed with test cases.
+
+    {{{output_format}}}
+
+# ============================================
+# Code LLM Judge Configuration
+# For code samples without test cases
+# ============================================
+code_llm_judge:
+  enabled: true
+  description: "Code semantic comparison for samples without test cases"
+
+  # Judge prompt - specifically for code semantic comparison
+  judge_prompt: |
+    You are a code evaluator. Determine if the predicted code is functionally equivalent to the ground truth solution.
+
+    **Problem Description**: {{{problem}}}
+
+    **Predicted Code**:
+    ```python
+    {{{prediction}}}
+    ```
+
+    **Ground Truth Solution**:
+    ```python
+    {{{ground_truth}}}
+    ```
+
+    **Evaluation Rules**:
+    1. **Functional equivalence**: Do both codes solve the same problem correctly?
+    2. **Variable names**: Different variable names are OK (e.g., `result` vs `output`)
+    3. **Implementation approach**: Different algorithms are OK if they produce the same result
+    4. **Edge cases**: Consider if both handle edge cases similarly
+    5. **Syntax**: Minor syntax differences (spacing, quotes) don't matter
+    6. **Imports**: Different import styles are OK if functionality is the same
+
+    **Important**:
+    - Focus on FUNCTIONAL equivalence, not textual similarity
+    - If the prediction solves the problem correctly (even with a different approach), mark as True
+    - If the prediction has logic errors or doesn't solve the problem, mark as False
+    - If unsure, consider what outputs both would produce for typical inputs
+
+    {{{output_format}}}
+
+# ============================================
+# HotpotQA Dataset Judge Configuration
+# ============================================
+hotpotqa:
+  enabled: true
+  description: "HotpotQA - Multi-hop reasoning QA"
+
+  # Answer normalization
+  answer_normalization:
+    - lowercase: true
+    - remove_articles: true  # a, an, the
+    - remove_punctuation: true
+    - trim_whitespace: true
+
+  # Judge prompt
+  judge_prompt: |
+    You are an answer evaluator for multi-hop reasoning questions.
+
+    **Task**: Are these two answers equivalent?
+
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Guidelines**:
+    - Answers may be option letters (A-E) or full text
+    - Case insensitive: "A" = "a"
+    - Ignore articles and punctuation: "the Eiffel Tower" = "Eiffel Tower"
+    - Consider semantic equivalence: "capital" = "capital city"
+    - Substring match OK: "The answer is Paris" contains "Paris"
+
+    {{{output_format}}}
+
+# ============================================
+# SQuAD v2 Dataset Judge Configuration
+# ============================================
+squad_v2:
+  enabled: true
+  description: "Stanford Question Answering Dataset v2"
+
+  # Same normalization strategy as HotpotQA
+  answer_normalization:
+    - lowercase: true
+    - remove_articles: true
+    - remove_punctuation: true
+    - trim_whitespace: true
+
+  # Judge prompt (supports semantic equivalence and hyponyms)
+  judge_prompt: |
+    You are an answer evaluator for reading comprehension questions.
+
+    **Task**: Are these two answers equivalent?
+
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Guidelines**:
+    - Case insensitive: "Paris" = "paris"
+    - Ignore articles and punctuation: "the Eiffel Tower" = "Eiffel Tower"
+    - **Semantic equivalence**: "capital" = "capital city"
+    - **Hyponym/Hypernym**: A general term matches a specific term if contextually correct
+      - "watch" = "pocketwatch" (watch is a hypernym of pocketwatch)
+      - "animal" = "dog" (if answer is about a dog being an animal)
+    - **Substring in compound words**: "watch" in "pocketwatch" counts as match
+    - Substring match OK: "The answer is Paris" contains "Paris"
+    - **Be lenient**: If the prediction captures the essential meaning, mark as True
+
+    {{{output_format}}}
+
+# ============================================
+# CommonsenseQA Dataset Judge Configuration
+# ============================================
+commonsenseqa:
+  enabled: true
+  description: "Common Sense Question Answering"
+
+  # CommonsenseQA special rules: multiple choice
+  multiple_choice:
+    enabled: true
+    option_format: "A-E"
+
+  judge_prompt: |
+    You are an answer evaluator for common sense reasoning questions.
+
+    **Task**: Are these two answers equivalent?
+
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Notes**:
+    - Both may be option letters (A-E) or full text answers
+    - "A" matches "A" (case insensitive)
+    - "ream" matches "ream" after normalization
+    - Consider them equivalent if they convey the same meaning
+
+    {{{output_format}}}
+
+# ============================================
+# MMLU Dataset Judge Configuration
+# ============================================
+mmlu:
+  enabled: true
+  description: "Massive Multitask Language Understanding"
+
+  # MMLU is multiple choice, same rules as CommonsenseQA
+  multiple_choice:
+    enabled: true
+    option_format: "A-D"
+
+  judge_prompt: |
+    You are an answer evaluator for multitask language understanding questions.
+
+    **Task**: Are these two answers equivalent?
+
+    **Prediction**: {{{prediction}}}
+    **Ground Truth**: {{{ground_truth}}}
+
+    **Notes**:
+    - Multiple choice questions (A-D options)
+    - "A" matches "A" (case insensitive)
+    - Consider them equivalent if they convey the same meaning
+
+    {{{output_format}}}
+
+# ============================================
+# Dataset Mapping Configuration
+# ============================================
+dataset_mapping:
+  # Problem type -> Dataset configuration
+  math:
+    - gsm8k
+    - math
+
+  code:
+    - humaneval
+    - mbpp
+    - bigcodebench
+    - mbppplus
+    - humanevalplus
+    - code_exercises
+    - code_llm_judge
+
+  qa:
+    - hotpotqa
+    - squad_v2
+    - commonsenseqa
+    - mmlu
+
+  # Match by source field
+  by_source:
+    gsm8k: "gsm8k"
+    math: "math"
+    humaneval: "humaneval"
+    mbpp: "mbpp"
+    bigcodebench: "humaneval"     # Use humaneval config
+    mbppplus: "mbpp"              # Use mbpp config
+    humanevalplus: "humaneval"    # Use humaneval config
+    code_exercises: "code_llm_judge"  # No test cases, use LLM Judge
+    code_llm_judge: "code_llm_judge"  # Dedicated Code LLM Judge
+    hotpotqa: "hotpotqa"
+    squad_v2: "squad_v2"
+    commonsenseqa: "commonsenseqa"
+    mmlu: "mmlu"
+
+# ============================================
+# Evaluation Strategy Selection Logic
+# ============================================
+evaluation_strategy:
+  # Priority: source > problem_type > default
+
+  priority:
+    1. "Check source field in sample"
+    2. "If source matches dataset_mapping, use corresponding config"
+    3. "Otherwise, use default config based on problem_type"
+    4. "If nothing matches, use global config"
+
+  # Example decision tree
+  decision_tree: |
+    if sample.get('source') in ['humaneval', 'mbpp']:
+        # Code problem: use test execution
+        return evaluate_by_test_execution()
+
+    elif sample.get('source') == 'gsm8k':
+        # GSM8K: use GSM8K-specific Judge
+        return llm_judge_with_prompt(judge_prompts['gsm8k'])
+
+    elif sample.get('source') == 'math':
+        # Math: use Math-specific Judge + short_answer priority
+        return llm_judge_with_prompt(judge_prompts['math'])
+
+    elif sample.get('problem_type') == 'qa':
+        # QA problem: select specific config based on source
+        if sample.get('source') == 'hotpotqa':
+            return llm_judge_with_prompt(judge_prompts['hotpotqa'])
+        else:
+            # Default QA config
+            return llm_judge_with_prompt(judge_prompts['squad_v2'])
+
+    else:
+        # Default: use current general Judge
+        return llm_judge_with_prompt(judge_prompts['global'])
+
+# ============================================
+# Performance Monitoring Configuration
+# ============================================
+monitoring:
+  enabled: true
+
+  # Record performance for each Judge
+  metrics:
+    - "judge_call_count"  # Call count
+    - "judge_success_rate"  # Success parse rate
+    - "judge_latency"  # Latency
+    - "agreement_with_fallback"  # Agreement with fallback method
+
+  # Debug sampling
+  debug_sampling:
+    enabled: true
+    sample_rate: 0.1  # 10% of judgments log detailed info
+
+# ============================================
+# Testing and Validation
+# ============================================
+testing:
+  # Regression test cases
+  regression_tests:
+    - name: "GSM8K #### extraction"
+      prediction: "So the answer is 24 cookies."
+      ground_truth: "Natalia sold 48/2 = <<48/2=24>>24...\\n#### 72"
+      expected: false  # 24 != 72
+
+    - name: "Math LaTeX equivalence"
+      prediction: "\\boxed{0.5}"
+      ground_truth: "The answer is \\frac{1}{2}"
+      expected: true  # 0.5 = 1/2
+
+    - name: "HotpotQA option inference forbidden"
+      prediction: "E"
+      ground_truth: "might dream"
+      expected: false  # Forbidden to infer E=might dream
+
+    - name: "HotpotQA option text match"
+      prediction: "might dream"
+      ground_truth: "E"
+      expected: true  # Text matches option content
+
+    - name: "Code variable name difference"
+      prediction: "WORD_TO_NUM = {'zero': 0}"
+      ground_truth: "value_map = {'zero': 0}"
+      expected: "test_execution"  # Should execute test, not use Judge

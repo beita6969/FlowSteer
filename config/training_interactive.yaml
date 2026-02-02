@@ -1,0 +1,230 @@
+# Interactive GRPO Training Configuration
+# ========================================
+# Configuration for interactive multi-turn workflow construction with GRPO training
+#
+# Key features:
+# - Multi-turn interactive workflow building (not single-turn generation)
+# - Each turn performs an atomic operation (add/delete/modify/finish)
+# - Uses action_mask to distinguish model/environment tokens
+# - Efficiency rewards encourage reasonable interaction rounds
+
+# =====================================
+# Experiment Configuration
+# =====================================
+exp_name: "interactive_grpo_v1"
+output_dir: "checkpoints/interactive"
+log_dir: "logs"
+max_steps: 300
+save_every: 10
+eval_every: 10
+log_every: 1
+
+# =====================================
+# Interactive GRPO Configuration
+# =====================================
+interactive_grpo:
+  enabled: true
+  max_rounds: 20
+  execute_each_step: true
+  vectorized_rollout: true
+  vectorized_rollout_workers: 0  # 0=auto
+  use_custom_prompts_in_execution: true
+
+  finish_constraints:
+    min_total_operators: 5
+    require_checker: true
+    require_structure: true
+
+  efficiency:
+    optimal_min: 1
+    optimal_max: 100
+    optimal_bonus: 0.0
+    too_few_penalty: 0.0
+    too_many_penalty: 0.0
+    penalty_per_extra_turn: 0.0
+
+# =====================================
+# Dataset Configuration
+# =====================================
+data_dir: "data"
+train_dataset: "data/train_balanced_12k_humaneval36_fixed.jsonl"
+test_dataset: "data/test_balanced_768_no_overlap.jsonl"
+
+code_public_tests:
+  humaneval: "data/datasets/humaneval_public_test.jsonl"
+  mbpp: "data/datasets/mbpp_public_test.jsonl"
+
+dataset_filters:
+  exclude_keywords:
+    - "django"
+    - "requests"
+    - "urllib"
+    - "socket"
+    - "ftplib"
+    - "smtplib"
+    - "http://"
+    - "https://"
+    - "download"
+
+# =====================================
+# GRPO Algorithm Configuration
+# =====================================
+adv_estimator: "grpo"
+samples_per_source: 6
+samples_per_group: 36
+clip_range: 0.20
+kl_loss_coef: 0.005
+entropy_coef: 0.005
+
+# =====================================
+# Model Configuration
+# =====================================
+base_model: "/path/to/Qwen3-8B"
+model_dtype: "bfloat16"
+
+# =====================================
+# LoRA Configuration
+# =====================================
+use_lora: true
+lora_rank: 64
+lora_alpha: 64
+lora_target_modules: "q_proj,k_proj,v_proj,o_proj"
+lora_dropout: 0.05
+
+# =====================================
+# Training Parameters
+# =====================================
+learning_rate: 1.0e-5
+weight_decay: 0.01
+max_grad_norm: 1.0
+gradient_accumulation_steps: 1
+warmup_steps: 10
+bf16: true
+gradient_checkpointing: true
+
+# =====================================
+# GPU Configuration
+# =====================================
+device: "cuda:0"
+device_mapping: [0]
+physical_gpus: [0]
+num_gpus: 1
+
+# =====================================
+# vLLM Inference Configuration
+# =====================================
+use_vllm_api: true
+vllm_base_url: "http://localhost:8003/v1"
+vllm_served_model_name: "Qwen3-8B"
+enable_lora_sync: true
+
+# =====================================
+# AFlow Configuration
+# =====================================
+aflow_config_path: "config/aflow_llm.yaml"
+aflow_executor_model: "local-executor"
+aflow_operators: ["Custom", "AnswerGenerate", "Programmer", "ScEnsemble", "Test", "Review", "Revise", "Decompose", "Verify", "Plan", "Aggregate", "Format"]
+aflow_operator_descriptions_path: "config/operator.json"
+execution_timeout: 600
+
+# =====================================
+# Code Evaluation
+# =====================================
+code_eval:
+  backend: "auto"
+  docker_image: "flowsteer/code-eval:latest"
+
+# =====================================
+# Reward Configuration
+# =====================================
+reward_type: "interactive_progressive"
+
+progressive_reward:
+  base_reward: -1.0
+  correctness_activation_threshold: 0.6
+  threshold_schedule:
+    enabled: false
+    start: 0.0
+    end: 0.6
+    warmup_steps: 30
+
+  milestones:
+    unique_types_3:
+      threshold: 3
+      reward: 0.1
+    unique_types_4:
+      threshold: 4
+      reward: 0.1
+    unique_types_5:
+      threshold: 5
+      reward: 0.1
+    unique_types_6:
+      threshold: 6
+      reward: 0.1
+    total_operators_6:
+      threshold: 6
+      reward: 0.1
+    total_operators_8:
+      threshold: 8
+      reward: 0.1
+    has_parallel:
+      reward: 0.2
+    has_conditional:
+      reward: 0.15
+    has_loop:
+      reward: 0.1
+    multi_structure:
+      reward: 0.15
+
+# =====================================
+# Generation Configuration
+# =====================================
+generation_config:
+  temperature: 0.6
+  top_p: 0.95
+  top_k: 20
+  max_new_tokens: 2048
+  do_sample: true
+  enable_thinking: true
+  vllm_action_max_tokens: 512
+  vllm_prompt_max_tokens: 256
+  vllm_repair_max_tokens: 128
+  vllm_max_concurrency: 32
+  vllm_context_limit: 16384
+
+# =====================================
+# Training Acceleration
+# =====================================
+simplified_logging: true
+debug: false
+verbose: false
+
+# =====================================
+# Temperature Schedule
+# =====================================
+temperature_schedule:
+  enabled: true
+  initial: 0.3
+  final: 0.15
+  warmup_steps: 30
+
+# =====================================
+# Weights & Biases Monitoring
+# =====================================
+wandb:
+  enabled: false
+  project: "flowsteer-grpo"
+  entity: ""
+  api_key: ""
+  run_name: ""
+  notes: ""
+  tags: ["interactive", "grpo"]
+
+# =====================================
+# Prompt Logging (Optional)
+# =====================================
+prompt_logging:
+  enabled: false
+  sample_rate: 1.0
+  max_prompt_chars: 2000
+  max_problem_chars: 2000

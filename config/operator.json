@@ -1,0 +1,58 @@
+{
+  "Custom": {
+    "description": "General text generation with step-by-step reasoning. Use for: QA, text analysis, logical reasoning. Think through each step carefully before giving final answer. NOT for code.",
+    "interface": "custom(input: str, instruction: str) -> dict with key 'response'"
+  },
+  "AnswerGenerate": {
+    "description": "Step-by-step reasoning. Think through each step carefully, show your work, then give final answer. Use for: math word problems, logical reasoning.",
+    "interface": "answer_generate(input: str) -> dict with keys 'thought' and 'answer'"
+  },
+  "CustomCodeGenerate": {
+    "description": "Code generation only (no execution). Use for: coding tasks when you need source code.",
+    "interface": "custom_code_generate(problem: str, entry_point: str, instruction: str) -> dict with key 'code'"
+  },
+  "Programmer": {
+    "description": "Write AND execute Python code. Break down the problem step by step, then write code to compute the answer. Use for: math calculations, data processing. Returns executed result.",
+    "interface": "programmer(problem: str, analysis: str = 'None') -> dict with keys 'code' and 'output'"
+  },
+  "Test": {
+    "description": "Run test cases on code. Use AFTER Programmer/CustomCodeGenerate for code tasks. Required before finish for code problems.",
+    "interface": "test(problem: str, solution: str, entry_point: str) -> dict with keys 'result' (bool) and 'solution'"
+  },
+  "Format": {
+    "description": "Extract concise answer from verbose text.",
+    "interface": "format(problem: str, solution: str) -> dict with key 'solution'"
+  },
+  "Review": {
+    "description": "Check if solution is correct step by step. Verify each calculation/reasoning step. MUST use with 'Review ? Revise : done' pattern.",
+    "interface": "review(problem: str, solution: str) -> dict with keys 'review_result' (bool) and 'feedback'"
+  },
+  "Revise": {
+    "description": "Fix solution based on Review feedback. Carefully recalculate step by step. Only use after Review returns false.",
+    "interface": "revise(problem: str, solution: str, feedback: str) -> dict with key 'solution'"
+  },
+  "ScEnsemble": {
+    "description": "Select most frequent answer from multiple solutions. Use after parallel execution.",
+    "interface": "sc_ensemble(solutions: List[str], problem: str) -> dict with key 'response'"
+  },
+  "MdEnsemble": {
+    "description": "Majority voting (more robust than ScEnsemble).",
+    "interface": "md_ensemble(solutions: List[str], problem: str) -> dict with key 'solution'"
+  },
+  "Decompose": {
+    "description": "Break complex problem into sub-problems step by step. Identify each component clearly. Use with Aggregate.",
+    "interface": "decompose(problem: str) -> dict with keys 'sub_problems' and 'reasoning'"
+  },
+  "Verify": {
+    "description": "Double-check answer correctness step by step. Recalculate and verify each step. Use as final check before finish.",
+    "interface": "verify(problem: str, answer: str) -> dict with keys 'is_correct' (bool) and 'confidence'"
+  },
+  "Plan": {
+    "description": "Create solving strategy step by step. **CRITICAL CONSTRAINT**: Plan MUST be used as the FIRST node in workflow. Do NOT use Plan after computation nodes (Programmer/AnswerGenerate/Custom) - it causes answer drift and overwrites correct results. If you need to revise strategy mid-workflow, use Review->Revise pattern instead. Plan is for initial planning only.",
+    "interface": "plan(problem: str) -> dict with keys 'plan' and 'approach'"
+  },
+  "Aggregate": {
+    "description": "Combine sub-answers into final answer step by step. Use after Decompose or parallel.",
+    "interface": "aggregate(problem: str, sub_answers: List[str]) -> dict with key 'aggregated_answer'"
+  }
+}

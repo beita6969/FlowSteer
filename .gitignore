@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Data and models
+data/
+merged_models/
+checkpoints/
+*.safetensors
+*.bin
+*.pt
+*.pth
+
+# Logs
+*.log
+wandb/
+logs/
+eval_logs/
+
+# Backup files
+*_backup*/
+*.backup
+*.backup.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+*.yaml.local
+
+# Large files
+*.tar.gz
+*.zip
+*.pdf
+
+# Temp files
+*.tmp
+.DS_Store

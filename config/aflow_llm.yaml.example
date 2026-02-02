@@ -1,0 +1,15 @@
+# AFlow LLM配置模板
+# 复制此文件为 aflow_llm.yaml 并填入你的API key
+
+models:
+  "gpt-4o-mini":
+    api_type: "openai"
+    base_url: "https://api.openai.com/v1"
+    api_key: "YOUR_OPENAI_API_KEY_HERE"  # 替换为你的OpenAI API key
+    temperature: 0
+    top_p: 1
+
+# 使用说明:
+# 1. 复制此文件: cp config/aflow_llm.yaml.example config/aflow_llm.yaml
+# 2. 编辑 aflow_llm.yaml，填入你的API key
+# 3. 确保 aflow_llm.yaml 已在 .gitignore 中（避免泄露）

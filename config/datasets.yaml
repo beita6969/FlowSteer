@@ -1,0 +1,230 @@
+# Dataset Configuration for AFlow+ROLL Training
+# Complete dataset integration with evaluation support
+
+# Dataset paths
+data:
+  base_dir: ./data
+  raw_dir: ./data/raw
+  processed_dir: ./data/processed
+
+# Training data mix
+training:
+  # Main training datasets
+  datasets:
+    math:
+      - name: gsm8k
+        path: ./data/raw/gsm8k/train.jsonl
+        weight: 0.25
+        type: math
+        evaluation: extract_answer
+
+    code:
+      - name: humaneval
+        path: ./data/raw/humaneval/HumanEval.jsonl
+        weight: 0.15
+        type: code
+        evaluation: pass_at_k
+
+      - name: mbpp
+        path: ./data/raw/mbpp/train.jsonl
+        weight: 0.10
+        type: code
+        evaluation: pass_at_k
+
+    qa:
+      - name: commonsenseqa
+        path: ./data/raw/commonsenseqa/train.jsonl
+        weight: 0.20
+        type: qa
+        evaluation: multiple_choice
+
+      - name: hotpotqa
+        path: ./data/raw/hotpotqa/train.json
+        weight: 0.15
+        type: multi_hop
+        evaluation: f1_score
+
+    mixed:
+      - name: mmlu
+        path: ./data/raw/mmlu/train.jsonl
+        weight: 0.15
+        type: multiple_choice
+        evaluation: accuracy
+
+  # Domain distribution for training
+  domain_ratios:
+    math: 0.30      # 30% math problems
+    code: 0.25      # 25% coding problems
+    qa: 0.25        # 25% QA problems
+    mixed: 0.20     # 20% mixed/multi-domain
+
+  # Sampling strategy
+  sampling:
+    strategy: weighted  # weighted, uniform, or curriculum
+    shuffle: true
+    seed: 42
+    batch_size: 4
+    num_samples_per_problem: 6  # For GRPO
+
+# Validation datasets
+validation:
+  datasets:
+    - name: gsm8k_val
+      path: ./data/raw/gsm8k/test.jsonl
+      size: 100
+      type: math
+
+    - name: humaneval_val
+      path: ./data/raw/humaneval/HumanEval.jsonl
+      size: 50
+      type: code
+
+    - name: commonsenseqa_val
+      path: ./data/raw/commonsenseqa/validation.jsonl
+      size: 100
+      type: qa
+
+    - name: mmlu_val
+      path: ./data/raw/mmlu/validation.jsonl
+      size: 100
+      type: multiple_choice
+
+# Test/Evaluation datasets
+evaluation:
+  # Datasets for final evaluation
+  datasets:
+    easy:
+      - gsm8k_test
+      - mbpp_test
+      - commonsenseqa_test
+
+    medium:
+      - humaneval_test
+      - hotpotqa_test
+      - mmlu_test
+
+    hard:
+      - math_competition  # Optional: AMC/AIME problems
+      - apps_test        # Optional: APPS dataset
+      - gpqa_test        # Optional: Graduate-level QA
+
+  # Evaluation metrics
+  metrics:
+    math:
+      primary: exact_match
+      secondary: numerical_tolerance
+      tolerance: 1e-4
+
+    code:
+      primary: pass_at_k
+      k_values: [1, 10, 100]
+      timeout: 5.0
+
+    qa:
+      primary: f1_score
+      secondary: exact_match
+
+    multiple_choice:
+      primary: accuracy
+      per_subject: true
+
+# Dataset preprocessing
+preprocessing:
+  # Math preprocessing
+  math:
+    extract_answer: true
+    remove_calculator_annotations: true
+    normalize_numbers: true
+
+  # Code preprocessing
+  code:
+    remove_comments: false
+    normalize_whitespace: true
+    extract_functions: true
+
+  # QA preprocessing
+  qa:
+    lowercase: true
+    remove_punctuation: true
+    normalize_whitespace: true
+
+# Data augmentation (optional)
+augmentation:
+  enabled: false
+  techniques:
+    math:
+      - number_variation  # Change numbers in problems
+      - unit_conversion   # Add unit conversions
+
+    code:
+      - variable_rename   # Rename variables
+      - docstring_variation  # Modify docstrings
+
+    qa:
+      - paraphrase       # Paraphrase questions
+      - answer_variation  # Multiple correct answers
+
+# Experience buffer settings (for few-shot learning)
+experience_buffer:
+  enabled: true
+  buffer_size: 100
+  reward_threshold: 8.0
+  save_path: ./data/experience_buffer/
+
+  # Per-dataset buffer allocation
+  allocation:
+    gsm8k: 20
+    humaneval: 20
+    mbpp: 15
+    commonsenseqa: 20
+    hotpotqa: 15
+    mmlu: 10
+
+# Dataset statistics tracking
+statistics:
+  track_distribution: true
+  log_frequency: 100  # Log every N samples
+  save_stats: true
+  stats_path: ./data/statistics/
+
+# Download settings
+download:
+  auto_download: true
+  verify_checksums: true
+  cache_dir: ~/.cache/datasets/
+  max_retries: 3
+  timeout: 300  # seconds
+
+# Integration with AFlow+ROLL
+integration:
+  # Map dataset types to AFlow operators
+  operator_preferences:
+    math:
+      primary: [AnswerGenerate, Programmer]
+      secondary: [ScEnsemble, Review]
+
+    code:
+      primary: [Programmer, Test]
+      secondary: [Review, Revise]
+
+    qa:
+      primary: [Custom, AnswerGenerate]
+      secondary: [ScEnsemble, Review]
+
+    multi_hop:
+      primary: [Custom, AnswerGenerate, Review]
+      secondary: [ScEnsemble, Revise]
+
+  # Workflow complexity targets
+  complexity:
+    min_operators: 1
+    max_operators: 4
+    prefer_simple: true  # Bias towards simpler workflows
+
+# Logging and monitoring
+logging:
+  dataset_logs: ./logs/datasets/
+  evaluation_logs: ./logs/evaluation/
+  verbose: true
+  log_samples: true  # Log sample inputs/outputs
+  sample_rate: 0.01  # Log 1% of samples

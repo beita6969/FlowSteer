@@ -1,0 +1,46 @@
+# FlowSteer Training Dependencies
+# Tested on: NVIDIA A100 80GB, CUDA 12.x
+
+# ========== PyTorch (CUDA 12.x) ==========
+# Install: pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# ========== Transformers & LoRA ==========
+transformers>=4.40.0
+accelerate>=0.27.0
+peft>=0.10.0
+bitsandbytes>=0.42.0
+safetensors>=0.4.0
+
+# ========== OpenAI API (LLM Judge) ==========
+openai>=1.0.0
+httpx>=0.25.0
+socksio>=1.0.0
+
+# ========== Data Processing ==========
+datasets>=2.16.0
+sentencepiece>=0.1.99
+tiktoken>=0.5.0
+pandas>=2.0.0
+scikit-learn>=1.3.0
+nltk>=3.8.0
+
+# ========== Utilities ==========
+pyyaml>=6.0
+tqdm>=4.66.0
+scipy>=1.11.0
+numpy>=1.24.0
+sympy>=1.12
+antlr4-python3-runtime>=4.11,<4.12
+regex>=2023.0.0
+tenacity>=8.2.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# ========== Monitoring (Optional) ==========
+wandb>=0.16.0
+
+# ========== HuggingFace Hub ==========
+huggingface-hub>=0.20.0
