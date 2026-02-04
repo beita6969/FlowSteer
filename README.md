@@ -7,6 +7,7 @@
 [![Paper](https://img.shields.io/badge/Paper-PDF-b31b1b.svg)](http://flowsteer.org/paper.pdf)
 [![GitHub](https://img.shields.io/badge/GitHub-Code-black.svg?logo=github)](https://anonymous.4open.science/r/FlowSteer-9B2E)
 [![HF Models](https://img.shields.io/badge/Models-HuggingFace-orange.svg?logo=huggingface)](https://huggingface.co/beita6969/FlowSteer-8b)
+[![HF Dataset](https://img.shields.io/badge/Dataset-HuggingFace-yellow.svg?logo=huggingface)](https://huggingface.co/datasets/beita6969/FlowSteer-Dataset)
 
 ### **FlowSteer**: End-to-End RL Framework for Automated Workflow Orchestration
 
