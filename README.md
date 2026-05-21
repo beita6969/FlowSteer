@@ -34,8 +34,6 @@ FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight policy ag
 
 At each turn, the Flow-Director observes the task, operator library, workflow state, and canvas feedback. It emits a brief reflection plus exactly one action. The canvas applies that action, validates the graph, executes available nodes when needed, and appends feedback for the next turn.
 
-## Results and Diagnostics
-
 <div align="center">
   <img src="figs/result.png" alt="Main results" width="96%">
 </div>
