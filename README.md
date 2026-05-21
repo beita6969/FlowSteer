@@ -16,22 +16,44 @@
 
 ## Overview
 
-FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight Flow-Director designs an executable workflow graph, while a pluggable executor LLM runs the designed workflow to solve the task. The framework combines an executable Workflow Canvas, designer--executor decoupling, and reinforcement learning over multi-turn canvas editing.
+FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight policy agent designs a workflow graph, and a downstream executor LLM runs that workflow to solve the task. The current repository is aligned with the arXiv v4 formulation, which centers on three ideas:
 
-## Visual Summary
+- **Workflow Canvas**: an executable graph-state environment that maintains the workflow, checks each atomic edit, executes operators, and returns feedback.
+- **Designer--Executor decoupling**: the Flow-Director designs the workflow, while a pluggable executor backend runs the designed graph.
+- **Reinforced Progressive Canvas Editing**: the Flow-Director commits one atomic edit per turn and is trained end-to-end with a canvas-masked GRPO objective and diversity-constrained reward.
 
-<table>
-<tr>
-<td width="50%" align="center">
-  <img src="figs/figure2.png" alt="Workflow orchestration paradigm comparison"><br>
-  <sub>Workflow orchestration paradigms</sub>
-</td>
-<td width="50%" align="center">
-  <img src="figs/figure3.png" alt="FlowSteer framework"><br>
-  <sub>FlowSteer framework</sub>
-</td>
-</tr>
-</table>
+<div align="center">
+  <img src="figs/figure2.png" alt="Workflow orchestration paradigm comparison" width="95%">
+</div>
+
+## Method
+
+<div align="center">
+  <img src="figs/figure3.png" alt="FlowSteer framework" width="95%">
+</div>
+
+At each turn, the Flow-Director observes the task, operator library, workflow state, and canvas feedback. It emits a brief reflection plus exactly one action. The canvas applies that action, validates the graph, executes available nodes when needed, and appends feedback for the next turn.
+
+Supported editing actions include:
+
+```text
+add, delete, modify, set_prompt, finish, parallel, conditional, loop
+```
+
+The operator library contains planning, solving, verification, revision, ensemble, and formatting operators:
+
+```text
+Plan, Decompose, Programmer, Custom, AnswerGenerate, Test,
+Review, Verify, Revise, ScEnsemble, Aggregate, Format
+```
+
+The training objective follows GRPO with a token mask over policy-generated tokens, so canvas feedback tokens in the shared context are not optimized as model outputs. The reward follows the paper setting:
+
+```text
+R(tau) = -1 + R_diversity(tau) + 1{R_diversity(tau) = 1} * R_answer(tau)
+```
+
+`R_diversity` checks whether the generated workflow contains verification, final formatting, sufficient operator diversity, and at least one useful control structure.
 
 ## Results and Diagnostics
 
