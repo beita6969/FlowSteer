@@ -22,10 +22,6 @@ FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight policy ag
 - **Designer--Executor decoupling**: the Flow-Director designs the workflow, while a pluggable executor backend runs the designed graph.
 - **Reinforced Progressive Canvas Editing**: the Flow-Director commits one atomic edit per turn and is trained end-to-end with a canvas-masked GRPO objective and diversity-constrained reward.
 
-<div align="center">
-  <img src="figs/figure2.png" alt="Workflow orchestration paradigm comparison" width="95%">
-</div>
-
 ## Method
 
 <div align="center">
@@ -33,19 +29,6 @@ FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight policy ag
 </div>
 
 At each turn, the Flow-Director observes the task, operator library, workflow state, and canvas feedback. It emits a brief reflection plus exactly one action. The canvas applies that action, validates the graph, executes available nodes when needed, and appends feedback for the next turn.
-
-<table>
-<tr>
-<td width="33%" align="center"><img src="figs/RQ3_1.png" alt="Backend transfer radar"></td>
-<td width="33%" align="center"><img src="figs/RQ3_2.png" alt="Training dynamics across backends"></td>
-<td width="33%" align="center"><img src="figs/RQ5_overall.png" alt="RL algorithm comparison"></td>
-</tr>
-<tr>
-<td width="33%" align="center"><img src="figs/RQ3_3_reward.png" alt="Reward scaling analysis"></td>
-<td width="33%" align="center"><img src="figs/RQ3_3_turns.png" alt="Interaction turns analysis"></td>
-<td width="33%" align="center"><img src="figs/scaling_a.png" alt="Scaling analysis"></td>
-</tr>
-</table>
 
 ## Repository Layout
 
