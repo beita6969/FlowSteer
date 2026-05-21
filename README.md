@@ -34,46 +34,24 @@ FlowSteer studies **Agent Designing Agentic Workflows**: a lightweight policy ag
 
 At each turn, the Flow-Director observes the task, operator library, workflow state, and canvas feedback. It emits a brief reflection plus exactly one action. The canvas applies that action, validates the graph, executes available nodes when needed, and appends feedback for the next turn.
 
-Supported editing actions include:
-
-```text
-add, delete, modify, set_prompt, finish, parallel, conditional, loop
-```
-
-The operator library contains planning, solving, verification, revision, ensemble, and formatting operators:
-
-```text
-Plan, Decompose, Programmer, Custom, AnswerGenerate, Test,
-Review, Verify, Revise, ScEnsemble, Aggregate, Format
-```
-
-The training objective follows GRPO with a token mask over policy-generated tokens, so canvas feedback tokens in the shared context are not optimized as model outputs. The reward follows the paper setting:
-
-```text
-R(tau) = -1 + R_diversity(tau) + 1{R_diversity(tau) = 1} * R_answer(tau)
-```
-
-`R_diversity` checks whether the generated workflow contains verification, final formatting, sufficient operator diversity, and at least one useful control structure.
-
 ## Results and Diagnostics
 
 <div align="center">
-  <img src="figs/result.png" alt="Main results" width="96%"><br>
-  <sub>Main results on IID and OOD benchmarks</sub>
+  <img src="figs/result.png" alt="Main results" width="96%">
 </div>
 
 <br>
 
 <table>
 <tr>
-<td width="33%" align="center"><img src="figs/RQ3_1.png" alt="Backend transfer radar"><br><sub>Backend transfer</sub></td>
-<td width="33%" align="center"><img src="figs/RQ3_2.png" alt="Training dynamics across backends"><br><sub>Training dynamics</sub></td>
-<td width="33%" align="center"><img src="figs/RQ5_overall.png" alt="RL algorithm comparison"><br><sub>RL comparison</sub></td>
+<td width="33%" align="center"><img src="figs/RQ3_1.png" alt="Backend transfer radar"></td>
+<td width="33%" align="center"><img src="figs/RQ3_2.png" alt="Training dynamics across backends"></td>
+<td width="33%" align="center"><img src="figs/RQ5_overall.png" alt="RL algorithm comparison"></td>
 </tr>
 <tr>
-<td width="33%" align="center"><img src="figs/RQ3_3_reward.png" alt="Reward scaling analysis"><br><sub>Reward scaling</sub></td>
-<td width="33%" align="center"><img src="figs/RQ3_3_turns.png" alt="Interaction turns analysis"><br><sub>Interaction turns</sub></td>
-<td width="33%" align="center"><img src="figs/scaling_a.png" alt="Scaling analysis"><br><sub>Scaling analysis</sub></td>
+<td width="33%" align="center"><img src="figs/RQ3_3_reward.png" alt="Reward scaling analysis"></td>
+<td width="33%" align="center"><img src="figs/RQ3_3_turns.png" alt="Interaction turns analysis"></td>
+<td width="33%" align="center"><img src="figs/scaling_a.png" alt="Scaling analysis"></td>
 </tr>
 </table>
 
