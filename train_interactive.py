@@ -938,7 +938,7 @@ def demo_dataset_building(
     logger.info("Demo: Interactive Workflow Building (Dataset Mode)")
     logger.info("=" * 60)
 
-    train_path = config.get('train_dataset', 'data/train_balanced_12k.jsonl')
+    train_path = config.get('train_dataset', 'data/train/train_12k.jsonl')
     print(f"[DEBUG] Loading dataset from {train_path}...", flush=True)
 
     problems_by_source = {}
@@ -1209,7 +1209,7 @@ def run_full_training(config: dict, model, tokenizer, args, resume_path: str = N
         except Exception as e:
             logger.warning(f"[PromptLog] write failed: {e}")
 
-    train_path = config.get('train_dataset', 'data/train_balanced_12k.jsonl')
+    train_path = config.get('train_dataset', 'data/train/train_12k.jsonl')
     logger.info(f"Loading training data from {train_path}")
 
     raw_data = load_dataset(train_path, filter_unanswerable=True)

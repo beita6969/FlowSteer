@@ -38,6 +38,7 @@ eval_logs/
 # Environment
 .env
 *.yaml.local
+config/aflow_llm.yaml
 
 # Large files
 *.tar.gz

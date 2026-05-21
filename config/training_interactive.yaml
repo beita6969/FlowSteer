@@ -1,17 +1,13 @@
-# Interactive GRPO Training Configuration
-# ========================================
-# Configuration for interactive multi-turn workflow construction with GRPO training
-#
-# Key features:
-# - Multi-turn interactive workflow building (not single-turn generation)
-# - Each turn performs an atomic operation (add/delete/modify/finish)
-# - Uses action_mask to distinguish model/environment tokens
-# - Efficiency rewards encourage reasonable interaction rounds
+# FlowSteer paper-aligned training configuration
+# ============================================
+# Reinforced Progressive Canvas Editing with canvas-masked GRPO.
+# The Flow-Director emits one atomic edit per turn; the Workflow Canvas
+# validates and executes edits, then returns feedback for the next turn.
 
 # =====================================
 # Experiment Configuration
 # =====================================
-exp_name: "interactive_grpo_v1"
+exp_name: "flowsteer_rpce_v4"
 output_dir: "checkpoints/interactive"
 log_dir: "logs"
 max_steps: 300
@@ -47,8 +43,8 @@ interactive_grpo:
 # Dataset Configuration
 # =====================================
 data_dir: "data"
-train_dataset: "data/train_balanced_12k_humaneval36_fixed.jsonl"
-test_dataset: "data/test_balanced_768_no_overlap.jsonl"
+train_dataset: "data/train/train_12k.jsonl"
+test_dataset: "data/eval/gsm8k.jsonl"
 
 code_public_tests:
   humaneval: "data/datasets/humaneval_public_test.jsonl"
@@ -122,7 +118,7 @@ enable_lora_sync: true
 # AFlow Configuration
 # =====================================
 aflow_config_path: "config/aflow_llm.yaml"
-aflow_executor_model: "local-executor"
+aflow_executor_model: "gpt-oss-120b"
 aflow_operators: ["Custom", "AnswerGenerate", "Programmer", "ScEnsemble", "Test", "Review", "Revise", "Decompose", "Verify", "Plan", "Aggregate", "Format"]
 aflow_operator_descriptions_path: "config/operator.json"
 execution_timeout: 600
@@ -141,11 +137,11 @@ reward_type: "interactive_progressive"
 
 progressive_reward:
   base_reward: -1.0
-  correctness_activation_threshold: 0.6
+  correctness_activation_threshold: 1.0
   threshold_schedule:
     enabled: false
     start: 0.0
-    end: 0.6
+    end: 1.0
     warmup_steps: 30
 
   milestones:

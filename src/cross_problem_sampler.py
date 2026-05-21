@@ -228,8 +228,8 @@ class CrossProblemSampler:
 
 if __name__ == "__main__":
     sampler = CrossProblemSampler(
-        train_dataset_path="data/train_balanced_12k_humaneval36_fixed.jsonl",
-        test_dataset_path="data/test_balanced_768_no_overlap.jsonl",
+        train_dataset_path="data/train/train_12k.jsonl",
+        test_dataset_path="data/eval/gsm8k.jsonl",
         samples_per_group=8
     )
 
